@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>PLAN.T.A.R Río Gallegos · Portal de Operación</title>
   <meta name="description" content="Panel operativo para empleados de la PLAGR Río Gallegos: KPIs, bitácora, mantenimiento, alarmas, laboratorio, HSE y documentos."/>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🛠️</text></svg>">
@@ -19,7 +19,7 @@
     }
     *{box-sizing:border-box}
     html{scroll-behavior:smooth}
-    html,body{height:100%}
+    html,body{height:100%; overflow-x:hidden}
     body{margin:0; font:15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu; background:linear-gradient(180deg,var(--bg),#07110e 60%); color:var(--text)}
     a{color:inherit}
     img{max-width:100%; height:auto; display:block}
@@ -30,19 +30,26 @@
     aside{position:sticky; top:0; height:100dvh; overflow:auto; background:linear-gradient(180deg,var(--panel),var(--panel2)); border-right:1px solid var(--border); padding:18px}
     main{padding:18px; display:grid; gap:18px}
 
-    /* ===== Topbar (ahora visible en todas las vistas) & off-canvas ===== */
+    /* ===== Topbar (siempre visible) ===== */
     .topbar{
-      display:flex;                  /* <-- visible siempre */
-      grid-column:1 / -1;            /* <-- ocupa ambas columnas de la grid */
-      align-items:center; justify-content:space-between; gap:10px;
-      padding:10px 14px;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:calc(10px + env(safe-area-inset-top)) 14px 10px;
       background:linear-gradient(180deg,var(--panel),var(--panel2));
       border-bottom:1px solid var(--border);
-      position:sticky; top:0; z-index:30;
+      position:sticky; top:0; z-index:50; min-height:56px;
+      grid-column:1 / -1;
+      -webkit-user-select:none; user-select:none;
+      flex-wrap:nowrap;
     }
-    .topbar-left{display:flex; align-items:center; gap:8px}
+    .topbar-left, .topbar-right{display:flex; align-items:center; gap:8px; flex:0 0 auto}
+    .topbar-center{
+      display:flex; align-items:center; gap:10px; flex:1 1 auto; min-width:0; justify-content:center;
+    }
+    .topbar-center img{width:28px; height:28px; border-radius:8px; flex:0 0 auto}
+    .topbar-title{font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%}
+
     .burger{
-      display:none;                  /* <-- oculto en desktop */
+      display:none;
       border:1px solid var(--border); background:transparent; color:inherit;
       padding:12px 14px; border-radius:12px; line-height:1; min-width:44px; min-height:44px
     }
@@ -69,7 +76,7 @@
     .top{display:flex; align-items:center; justify-content:space-between; gap:12px}
     .breadcrumbs{color:var(--muted); font-size:13px}
     .actions{display:flex; gap:8px; flex-wrap:wrap}
-    .btn{padding:12px 14px; border-radius:12px; border:1px solid var(--border); background:linear-gradient(180deg,var(--panel),var(--panel2)); color:inherit; text-decoration:none; min-height:44px}
+    .btn{padding:12px 14px; border-radius:12px; border:1px solid var(--border); background:linear-gradient(180deg,var(--panel),var(--panel2)); color:inherit; text-decoration:none; min-height:44px; white-space:nowrap}
     .btn.primary{background:var(--brand); color:#fff; border-color:color-mix(in srgb, var(--brand) 20%, black)}
     .btn.sm{padding:8px 10px; min-height:36px; border-radius:10px; font-size:13px}
 
@@ -92,7 +99,7 @@
     .progress{height:10px; background:#ffffff10; border:1px solid var(--border); border-radius:999px; overflow:hidden}
     .progress > i{display:block; height:100%; width:var(--pct,50%); background:linear-gradient(90deg,var(--brand),var(--accent))}
 
-    /* TABLES: scroll + versión "cards" en móviles */
+    /* TABLES */
     .table-wrap{overflow:auto; border-radius:12px; border:1px solid var(--border)}
     table{width:100%; border-collapse:collapse; background:transparent}
     th,td{padding:12px 14px; border-bottom:1px solid var(--border); text-align:left; white-space:nowrap}
@@ -116,13 +123,13 @@
     .step.done i{background:color-mix(in srgb, var(--ok) 30%, transparent)}
 
     /* ===== Bottom Nav (móvil) ===== */
-    .bnav{position:fixed; bottom:0; left:0; right:0; display:none; grid-template-columns:repeat(5,1fr); gap:6px; padding:8px; background:linear-gradient(180deg,var(--panel),var(--panel2)); border-top:1px solid var(--border); z-index:50}
+    .bnav{position:fixed; bottom:0; left:0; right:0; display:none; grid-template-columns:repeat(5,1fr); gap:6px; padding:8px; background:linear-gradient(180deg,var(--panel),var(--panel2)); border-top:1px solid var(--border); z-index:45}
     .bnav a{display:grid; place-items:center; text-decoration:none; color:inherit; padding:10px 6px; border-radius:10px; border:1px solid transparent; font-size:12px}
     .bnav a i{display:block; font-style:normal; font-size:18px; margin-bottom:4px}
     .bnav a:active, .bnav a:hover{background:#ffffff10; border-color:var(--border)}
 
     /* ===== FAB (móvil) ===== */
-    .fab{position:fixed; right:14px; bottom:72px; display:none; padding:14px 16px; border-radius:999px; background:var(--brand); color:#fff; border:none; box-shadow:var(--shadow); font-weight:600}
+    .fab{position:fixed; right:14px; bottom:72px; display:none; padding:14px 16px; border-radius:999px; background:var(--brand); color:#fff; border:none; box-shadow:var(--shadow); font-weight:600; z-index:46}
 
     /* ===================== RESPONSIVE ===================== */
     @media (max-width: 1160px){
@@ -133,15 +140,28 @@
       .app{grid-template-columns:1fr}
       aside{position:fixed; left:calc(-1 * var(--aside-w)); top:0; bottom:0; width:var(--aside-w); height:100dvh; z-index:40; transition:left .25s ease}
       .app.nav-open aside{left:0}
+
       .overlay{display:block; position:fixed; inset:0; background:rgba(0,0,0,.45); backdrop-filter:blur(2px); opacity:0; pointer-events:none; transition:opacity .25s ease; z-index:35}
       .app.nav-open .overlay{opacity:1; pointer-events:auto}
-      .topbar .burger{display:inline-block}  /* <-- burger solo en móvil */
-      main{padding:12px 12px 96px} /* espacio para bottom nav */
+
+      .burger{display:inline-block}                 /* ☰ visible */
+      .topbar-left .btn{display:none}               /* oculta botones grandes */
+      .topbar-right .btn{padding:8px 10px; font-size:12px} /* compacta 'Alarmas' */
+      .topbar-center .topbar-title{max-width:70vw} /* margen para lados */
+
+      main{padding:12px 12px 96px}
       .cols-4{grid-template-columns:1fr 1fr}
       .cols-3{grid-template-columns:1fr 1fr}
       .cols-2{grid-template-columns:1fr}
       .bnav{display:grid}
       .fab{display:inline-flex; align-items:center; gap:8px}
+    }
+    @media (max-width: 560px){
+      .topbar-center .topbar-title{max-width:62vw; font-size:14px}
+    }
+    @media (max-width: 420px){
+      .topbar-right{display:none}                   /* oculta 'Alarmas' en muy chico */
+      .topbar-center .topbar-title{max-width:76vw}
     }
     @media (max-width: 640px){
       .cols-4,.cols-3{grid-template-columns:1fr}
@@ -155,7 +175,7 @@
 </head>
 <body>
   <div class="app" id="app">
-    <!-- ====== Header / Topbar (botones a la izquierda) ====== -->
+    <!-- ====== Header / Topbar ====== -->
     <div class="topbar">
       <div class="topbar-left">
         <a class="btn sm primary" href="https://juanifernandez250.github.io/PLANTAR/">Inicio</a>
@@ -163,12 +183,14 @@
         <button class="burger" id="btnMenu" aria-label="Abrir menú" aria-expanded="false">☰</button>
       </div>
 
-      <div style="display:flex; align-items:center; gap:10px">
-        <img src="./Logo-2D-sin-texto.png" alt="Logo PLAGR" style="width:28px;height:28px;border-radius:8px">
-        <strong>PLAN.T.A.R. · Operación</strong>
+      <div class="topbar-center">
+        <img src="./Logo-2D-sin-texto.png" alt="Logo PLAN.T.A.R." />
+        <strong class="topbar-title">PLAN.T.A.R. · Operación</strong>
       </div>
 
-      <a class="btn sm" href="#alarmas">Alarmas</a>
+      <div class="topbar-right">
+        <a class="btn sm" href="#alarmas">Alarmas</a>
+      </div>
     </div>
 
     <div class="overlay" id="overlay"></div>
@@ -454,4 +476,3 @@
   </script>
 </body>
 </html>
-
