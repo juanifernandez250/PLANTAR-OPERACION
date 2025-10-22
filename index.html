@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PLAN.T.A.R Río Gallegos · Portal de Operación</title>
+  <meta name="description" content="Panel operativo para empleados de la PLAGR Río Gallegos: KPIs, bitácora, mantenimiento, alarmas, laboratorio, HSE y documentos."/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🛠️</text></svg>">
+  <style>
+    /* ===================== PALETA / TEMA ===================== */
+    :root{
+      --bg:#0b1210; --panel:#0f1916; --panel2:#0b1512; --text:#eef5f0; --muted:#a9c7b7; --border:#193329;
+      --brand:#1f8f5b; --accent:#1a6ad8; --ok:#2bc188; --warn:#ffcf66; --bad:#ff6b6b;
+      --radius:16px; --shadow:0 10px 28px rgba(0,0,0,.30);
+      --aside-w:260px;
+    }
+    @media (prefers-color-scheme: light){
+      :root{--bg:#f6fbf8; --panel:#ffffff; --panel2:#f2f7f4; --text:#0b1210; --muted:#587264; --border:#e0eee6}
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    html,body{height:100%}
+    body{margin:0; font:15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu; background:linear-gradient(180deg,var(--bg),#07110e 60%); color:var(--text)}
+    a{color:inherit}
+    img{max-width:100%; height:auto; display:block}
+    button{cursor:pointer}
+
+    /* ===================== LAYOUT ===================== */
+    .app{display:grid; grid-template-columns:var(--aside-w) 1fr; min-height:100dvh; position:relative}
+    aside{position:sticky; top:0; height:100dvh; overflow:auto; background:linear-gradient(180deg,var(--panel),var(--panel2)); border-right:1px solid var(--border); padding:18px}
+    main{padding:18px; display:grid; gap:18px}
+
+    /* ===== Topbar (ahora visible en todas las vistas) & off-canvas ===== */
+    .topbar{
+      display:flex;                  /* <-- visible siempre */
+      grid-column:1 / -1;            /* <-- ocupa ambas columnas de la grid */
+      align-items:center; justify-content:space-between; gap:10px;
+      padding:10px 14px;
+      background:linear-gradient(180deg,var(--panel),var(--panel2));
+      border-bottom:1px solid var(--border);
+      position:sticky; top:0; z-index:30;
+    }
+    .topbar-left{display:flex; align-items:center; gap:8px}
+    .burger{
+      display:none;                  /* <-- oculto en desktop */
+      border:1px solid var(--border); background:transparent; color:inherit;
+      padding:12px 14px; border-radius:12px; line-height:1; min-width:44px; min-height:44px
+    }
+    .overlay{display:none}
+
+    /* ===================== SIDEBAR ===================== */
+    .logo{display:flex; align-items:center; gap:10px}
+    .logo img{width:40px;height:40px;border-radius:10px}
+    .logo h1{font-size:16px; margin:0}
+    .logo small{display:block; color:var(--muted)}
+    .search{margin-top:12px}
+    .search input{width:100%; padding:12px; border-radius:12px; border:1px solid var(--border); background:transparent; color:inherit}
+    nav{display:grid; gap:6px; margin:14px 0}
+    nav a{display:flex; align-items:center; gap:10px; padding:12px 14px; border:1px solid transparent; border-radius:12px; text-decoration:none}
+    nav a:hover{background:#ffffff10; border-color:var(--border)}
+    nav a.active{background:color-mix(in srgb, var(--brand) 20%, transparent); border-color:#3a6a5530}
+
+    .user{margin-top:auto; padding-top:12px; border-top:1px solid var(--border); display:grid; gap:8px}
+    .user .row{display:flex; align-items:center; gap:10px}
+    .user img{width:40px; height:40px; border-radius:10px}
+    .chip{background:color-mix(in srgb, var(--brand) 20%, transparent); border:1px solid var(--border); padding:8px 12px; border-radius:999px; font-size:12px; display:inline-grid; place-items:center}
+
+    /* ===================== HEAD / UTIL ===================== */
+    .top{display:flex; align-items:center; justify-content:space-between; gap:12px}
+    .breadcrumbs{color:var(--muted); font-size:13px}
+    .actions{display:flex; gap:8px; flex-wrap:wrap}
+    .btn{padding:12px 14px; border-radius:12px; border:1px solid var(--border); background:linear-gradient(180deg,var(--panel),var(--panel2)); color:inherit; text-decoration:none; min-height:44px}
+    .btn.primary{background:var(--brand); color:#fff; border-color:color-mix(in srgb, var(--brand) 20%, black)}
+    .btn.sm{padding:8px 10px; min-height:36px; border-radius:10px; font-size:13px}
+
+    /* ===================== CARDS / GRIDS ===================== */
+    .grid{display:grid; gap:14px}
+    .cols-4{grid-template-columns: repeat(4, minmax(0,1fr))}
+    .cols-3{grid-template-columns: repeat(3, minmax(0,1fr))}
+    .cols-2{grid-template-columns: repeat(2, minmax(0,1fr))}
+    .auto-3{grid-template-columns: repeat(auto-fit, minmax(220px, 1fr))}
+    .auto-2{grid-template-columns: repeat(auto-fit, minmax(280px, 1fr))}
+    .card{background:linear-gradient(180deg,var(--panel),var(--panel2)); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow)}
+    .card .hd{padding:12px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between}
+    .card .bd{padding:14px}
+
+    /* KPI */
+    .kpi{display:grid; gap:4px}
+    .kpi h4{margin:0; color:var(--muted); font-size:13px}
+    .kpi .v{font-size:clamp(18px, 3.2vw, 26px); font-weight:700}
+    .trend{font-size:12px; color:var(--muted)}
+    .progress{height:10px; background:#ffffff10; border:1px solid var(--border); border-radius:999px; overflow:hidden}
+    .progress > i{display:block; height:100%; width:var(--pct,50%); background:linear-gradient(90deg,var(--brand),var(--accent))}
+
+    /* TABLES: scroll + versión "cards" en móviles */
+    .table-wrap{overflow:auto; border-radius:12px; border:1px solid var(--border)}
+    table{width:100%; border-collapse:collapse; background:transparent}
+    th,td{padding:12px 14px; border-bottom:1px solid var(--border); text-align:left; white-space:nowrap}
+    th{color:var(--muted); font-weight:600; font-size:13px}
+    tr:hover td{background:#ffffff08}
+
+    @media (max-width:640px){
+      .table-wrap{border:none}
+      table{display:block}
+      thead{display:none}
+      tbody{display:grid; gap:12px}
+      tr{display:grid; background:linear-gradient(180deg,var(--panel),var(--panel2)); border:1px solid var(--border); border-radius:12px; overflow:hidden}
+      td{display:flex; justify-content:space-between; gap:12px; padding:10px 12px; white-space:normal}
+      td::before{content:attr(data-th); color:var(--muted)}
+    }
+
+    /* TIMELINE */
+    .timeline{display:grid; gap:10px}
+    .step{display:grid; grid-template-columns:26px 1fr; gap:10px}
+    .step i{width:26px; height:26px; border-radius:50%; border:1px solid var(--border); display:grid; place-items:center; background:#ffffff10}
+    .step.done i{background:color-mix(in srgb, var(--ok) 30%, transparent)}
+
+    /* ===== Bottom Nav (móvil) ===== */
+    .bnav{position:fixed; bottom:0; left:0; right:0; display:none; grid-template-columns:repeat(5,1fr); gap:6px; padding:8px; background:linear-gradient(180deg,var(--panel),var(--panel2)); border-top:1px solid var(--border); z-index:50}
+    .bnav a{display:grid; place-items:center; text-decoration:none; color:inherit; padding:10px 6px; border-radius:10px; border:1px solid transparent; font-size:12px}
+    .bnav a i{display:block; font-style:normal; font-size:18px; margin-bottom:4px}
+    .bnav a:active, .bnav a:hover{background:#ffffff10; border-color:var(--border)}
+
+    /* ===== FAB (móvil) ===== */
+    .fab{position:fixed; right:14px; bottom:72px; display:none; padding:14px 16px; border-radius:999px; background:var(--brand); color:#fff; border:none; box-shadow:var(--shadow); font-weight:600}
+
+    /* ===================== RESPONSIVE ===================== */
+    @media (max-width: 1160px){
+      .cols-4{grid-template-columns: repeat(3, minmax(0,1fr))}
+    }
+    @media (max-width: 980px){
+      /* Off-canvas sidebar */
+      .app{grid-template-columns:1fr}
+      aside{position:fixed; left:calc(-1 * var(--aside-w)); top:0; bottom:0; width:var(--aside-w); height:100dvh; z-index:40; transition:left .25s ease}
+      .app.nav-open aside{left:0}
+      .overlay{display:block; position:fixed; inset:0; background:rgba(0,0,0,.45); backdrop-filter:blur(2px); opacity:0; pointer-events:none; transition:opacity .25s ease; z-index:35}
+      .app.nav-open .overlay{opacity:1; pointer-events:auto}
+      .topbar .burger{display:inline-block}  /* <-- burger solo en móvil */
+      main{padding:12px 12px 96px} /* espacio para bottom nav */
+      .cols-4{grid-template-columns:1fr 1fr}
+      .cols-3{grid-template-columns:1fr 1fr}
+      .cols-2{grid-template-columns:1fr}
+      .bnav{display:grid}
+      .fab{display:inline-flex; align-items:center; gap:8px}
+    }
+    @media (max-width: 640px){
+      .cols-4,.cols-3{grid-template-columns:1fr}
+      .btn{padding:12px 14px}
+    }
+    @media (prefers-reduced-motion: reduce){
+      html{scroll-behavior:auto}
+      .overlay, aside{transition:none}
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <!-- ====== Header / Topbar (botones a la izquierda) ====== -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <a class="btn sm primary" href="/Integral/index.html">Inicio</a>
+        <a class="btn sm primary" href="/Usuarios/main.html">Portal Usuarios</a>
+        <button class="burger" id="btnMenu" aria-label="Abrir menú" aria-expanded="false">☰</button>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:10px">
+        <img src="./Logo-2D-sin-texto.png" alt="Logo PLAGR" style="width:28px;height:28px;border-radius:8px">
+        <strong>PLAN.T.A.R. · Operación</strong>
+      </div>
+
+      <a class="btn sm" href="#alarmas">Alarmas</a>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+
+    <!-- ================================= SIDEBAR ================================= -->
+    <aside>
+      <div class="logo">
+        <img src="./Logo-2D-sin-texto.png" alt="Logo PLAN.T.A.R."/>
+        <div>
+          <h1>PLAN.T.A.R. · Operación</h1>
+          <small>Río Gallegos</small>
+        </div>
+      </div>
+
+      <div class="search"><input id="q" placeholder="Buscar… (SOP, alarmas, OT)"/></div>
+
+      <nav aria-label="Secciones">
+        <a href="#resumen" class="active">🏭 Resumen</a>
+        <a href="#bitacora">📝 Registro</a>
+        <a href="#mantenimiento">🛠️ Mantenimiento</a>
+        <a href="#alarmas">🚨 Alarmas</a>
+        <a href="#laboratorio">🧪 Laboratorio</a>
+        <a href="#documentos">📚 SOP / Documentos</a>
+        <a href="#hse">🦺 Seguridad (HSE)</a>
+        <a href="#contactos">📞 Contactos</a>
+      </nav>
+
+      <div class="user">
+        <div class="row">
+          <img src="Personal.png" alt="Operario"/>
+          <div>
+            <strong>Turno: Noche</strong>
+            <div class="muted">Usuario: jifernandez</div>
+          </div>
+        </div>
+        <div class="chip" id="conEstado">Conectado</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap">
+          <button class="btn" id="btnTema">Tema</button>
+          <button class="btn" id="btnExport">Exportar datos</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ================================= MAIN ================================= -->
+    <main>
+      <div class="top">
+        <div class="breadcrumbs">PLAGR / Operación</div>
+        <div class="actions">
+          <a class="btn" href="#bitacora">Cargar parte</a>
+          <a class="btn primary" href="#alarmas">Ver alarmas</a>
+        </div>
+      </div>
+
+      <!-- ===================== RESUMEN ===================== -->
+      <section id="resumen" class="grid cols-4">
+        <div class="card"><div class="bd kpi"><h4>Caudal actual</h4><div class="v" id="kFlow">1.280 m³/h</div><div class="progress"><i style="--pct:64%"></i></div><div class="trend">24h: +2%</div></div></div>
+        <div class="card"><div class="bd kpi"><h4>OD reactor</h4><div class="v" id="kOD">2,3 mg/L</div><div class="progress"><i style="--pct:46%"></i></div><div class="trend">Setpoint: 2,0</div></div></div>
+        <div class="card"><div class="bd kpi"><h4>Energía (kWh/d)</h4><div class="v" id="kE">9.800</div><div class="progress"><i style="--pct:70%"></i></div><div class="trend">Objetivo: 9.000</div></div></div>
+        <div class="card"><div class="bd kpi"><h4>Cloro residual</h4><div class="v" id="kCl">0,4 mg/L</div><div class="progress"><i style="--pct:40%"></i></div><div class="trend">Rango: 0,3–0,6</div></div></div>
+      </section>
+
+      <section class="grid cols-2">
+        <div class="card">
+          <div class="hd"><strong>Estado de equipos críticos</strong><span class="muted">Aeradores, bombas</span></div>
+          <div class="bd table-wrap">
+            <table id="tblEquipos" aria-label="Equipos críticos">
+              <thead><tr><th>Equipo</th><th>Estado</th><th>Obs.</th></tr></thead>
+              <tbody>
+                <tr><td>Bomba ingreso B1</td><td>Operativa</td><td>—</td></tr>
+                <tr><td>Aeradores A2</td><td>En servicio</td><td>2.1 bar</td></tr>
+                <tr><td>Rasquetas decantador D1</td><td>Mant. en 48h</td><td class="muted">Ver OT-102</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="hd"><strong>Plan del turno</strong><span class="muted">Checklist rápido</span></div>
+          <div class="bd timeline" id="planTurno">
+            <div class="step done"><i>✓</i><div>Lectura 06:00 – Caudal/OD</div></div>
+            <div class="step"><i>•</i><div>Tomar muestra efluente 08:00</div></div>
+            <div class="step"><i>•</i><div>Verificar filtros 10:00</div></div>
+            <div class="step"><i>•</i><div>Verificar stock hipoclorito</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== BITÁCORA ===================== -->
+      <section id="bitacora" class="card">
+        <div class="hd"><strong>Registro del turno</strong><div class="muted">Registro local (se conserva en tu navegador)</div></div>
+        <div class="bd">
+          <form id="fBitacora" class="grid auto-2">
+            <label>Hora<br><input type="time" id="bHora" required></label>
+            <label>Equipo / Área<br><input id="bEquipo" placeholder="Ej: Reactor A1" required></label>
+            <label style="grid-column:1/-1">Detalle<br><textarea id="bDetalle" rows="3" required placeholder="Descripción breve"></textarea></label>
+            <div><button class="btn primary" type="submit">Agregar registro</button></div>
+          </form>
+          <hr style="border:0;border-top:1px solid var(--border); margin:12px 0">
+          <div class="table-wrap"><table id="tblBitacora"><thead><tr><th>Hora</th><th>Equipo</th><th>Detalle</th><th></th></tr></thead><tbody></tbody></table></div>
+        </div>
+      </section>
+
+      <!-- ===================== MANTENIMIENTO ===================== -->
+      <section id="mantenimiento" class="card">
+        <div class="hd"><strong>Órdenes de trabajo</strong><div class="muted">Programadas</div></div>
+        <div class="bd">
+          <form id="fOT" class="grid auto-3">
+            <label>N° OT<br><input id="otN" placeholder="OT-103"></label>
+            <label>Equipo<br><input id="otEq" placeholder="Soplante S2"></label>
+            <label>Fecha<br><input type="date" id="otF"></label>
+            <label style="grid-column:1/-1">Detalle<br><input id="otDet" placeholder="Descripción"></label>
+            <div><button class="btn" type="submit">Agregar OT</button></div>
+          </form>
+          <div class="table-wrap" style="margin-top:10px">
+            <table id="tblOT">
+              <thead><tr><th>OT</th><th>Equipo</th><th>Fecha</th><th>Estado</th><th></th></tr></thead>
+              <tbody>
+                <tr><td>OT-102</td><td>Rasquetas D1</td><td>2025-10-28</td><td>Pendiente</td><td><button class="btn" data-close>Finalizar</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== ALARMAS ===================== -->
+      <section id="alarmas" class="card">
+        <div class="hd"><strong>Alarmas</strong><div class="muted">Reconocer y comentar</div></div>
+        <div class="bd table-wrap">
+          <table id="tblAlarmas">
+            <thead><tr><th>Hora</th><th>Alarma</th><th>Prioridad</th><th>Estado</th><th></th></tr></thead>
+            <tbody>
+              <tr><td>06:12</td><td>OD bajo Reactor A1</td><td>Alta</td><td>Pendiente</td><td><button class="btn" data-ack>Reconocer</button></td></tr>
+              <tr><td>07:40</td><td>Cloro residual alto</td><td>Media</td><td>Pendiente</td><td><button class="btn" data-ack>Reconocer</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===================== LABORATORIO ===================== -->
+      <section id="laboratorio" class="card">
+        <div class="hd"><strong>Laboratorio</strong><div class="muted">Resultados rápidos</div></div>
+        <div class="bd table-wrap">
+          <table id="tblLab">
+            <thead><tr><th>Parámetro</th><th>Resultado</th><th>Unidad</th><th>Límite</th></tr></thead>
+            <tbody>
+              <tr><td>DBO₅</td><td>22</td><td>mg/L</td><td>&lt; 30</td></tr>
+              <tr><td>SST</td><td>19</td><td>mg/L</td><td>&lt; 30</td></tr>
+              <tr><td>pH</td><td>7,3</td><td>—</td><td>6–9</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===================== DOCUMENTOS / SOP ===================== -->
+      <section id="documentos" class="card">
+        <div class="hd"><strong>Documentos</strong><div class="muted">Procedimientos esenciales</div></div>
+        <div class="bd grid auto-3">
+          <article class="card"><div class="hd"><strong>Aireadores-01</strong><span class="muted">Arranque de aireadores</span></div><div class="bd"><ol><li>Verificar válvulas</li><li>Encender S1→S2</li><li>Ajustar 2.0 mg/L OD</li></ol><a class="btn" href="#">Abrir PDF</a></div></article>
+          <article class="card"><div class="hd"><strong>SOP-02</strong><span class="muted">Backwash filtros</span></div><div class="bd"><ol><li>Aislar línea</li><li>Iniciar retrolavado</li><li>Verificar turbidez</li></ol><a class="btn" href="#">Abrir PDF</a></div></article>
+          <article class="card"><div class="hd"><strong>Instructivo HIPO</strong><span class="muted">Hipoclorito</span></div><div class="bd"><ul><li>EPP obligatorio</li><li>Neutralización</li></ul><a class="btn" href="#">Abrir PDF</a></div></article>
+        </div>
+      </section>
+
+      <!-- ===================== HSE ===================== -->
+      <section id="hse" class="card">
+        <div class="hd"><strong>Seguridad y ambiente (HSE)</strong><div class="muted">Permisos y reportes</div></div>
+        <div class="bd grid auto-2">
+          <div>
+            <h4>Permisos de trabajo</h4>
+            <div class="table-wrap"><table id="tblPermisos"><thead><tr><th>ID</th><th>Tipo</th><th>Venc.</th><th>Estado</th></tr></thead><tbody><tr><td>PT-55</td><td>Alto</td><td>2025-10-29</td><td>Vigente</td></tr></tbody></table></div>
+          </div>
+          <div>
+            <h4>Reporte de incidente</h4>
+            <form id="fHse" class="grid auto-2">
+              <label>Fecha<br><input type="date" id="hseF" required></label>
+              <label>Clasificación<br><input id="hseC" placeholder="Alto - Medio - Bajo" required></label>
+              <label style="grid-column:1/-1">Descripción<br><textarea id="hseD" rows="3" required></textarea></label>
+              <div><button class="btn" type="submit">Enviar</button></div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== CONTACTOS ===================== -->
+      <section id="contactos" class="card">
+        <div class="hd"><strong>Contactos de guardia</strong><div class="muted">Técnicos y contratistas</div></div>
+        <div class="bd table-wrap">
+          <table><thead><tr><th>Área</th><th>Nombre</th><th>Teléfono</th><th>Obs.</th></tr></thead><tbody>
+            <tr><td>Jefe de Planta</td><td>Ing. M. Pérez</td><td>(2966) 111-222</td><td>24/7</td></tr>
+            <tr><td>Mantenimiento</td><td>L. Rojas</td><td>(2966) 333-444</td><td>Semana</td></tr>
+            <tr><td>Laboratorio</td><td>A. Díaz</td><td>(2966) 555-666</td><td>Diurno</td></tr>
+          </tbody></table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ===== Bottom navigation (móvil) ===== -->
+  <nav class="bnav" aria-label="Navegación móvil rápida">
+    <a href="#resumen"><i>🏭</i>Resumen</a>
+    <a href="#bitacora"><i>📝</i>Registro</a>
+    <a href="#mantenimiento"><i>🛠️</i>OT</a>
+    <a href="#alarmas"><i>🚨</i>Alarmas</a>
+    <a href="#hse"><i>🦺</i>HSE</a>
+  </nav>
+  <button class="fab" id="fab">➕ Registrar</button>
+
+  <script>
+    // ===== Tema (toggle light/dark con localStorage) =====
+    const btnTema = document.getElementById('btnTema');
+    if(localStorage.getItem('plagr-theme')==='light') document.documentElement.style.setProperty('color-scheme','light');
+    btnTema?.addEventListener('click',()=>{
+      const current = localStorage.getItem('plagr-theme');
+      const next = current==='light'? 'dark' : 'light';
+      localStorage.setItem('plagr-theme', next);
+      document.documentElement.style.setProperty('color-scheme', next);
+    });
+
+    // ===== Off-canvas nav (móvil) =====
+    const app = document.getElementById('app');
+    const btnMenu = document.getElementById('btnMenu');
+    const overlay = document.getElementById('overlay');
+    const toggleNav = (open)=>{
+      const willOpen = open ?? !app.classList.contains('nav-open');
+      app.classList.toggle('nav-open', willOpen);
+      btnMenu?.setAttribute('aria-expanded', willOpen?'true':'false');
+    };
+    btnMenu?.addEventListener('click', ()=> toggleNav());
+    overlay?.addEventListener('click', ()=> toggleNav(false));
+    document.querySelectorAll('aside nav a').forEach(a=>a.addEventListener('click',()=>toggleNav(false)));
+
+    // ===== Scroll spy simple =====
+    const links=[...document.querySelectorAll('aside nav a')];
+    const secs=links.map(l=>document.querySelector(l.getAttribute('href'))).filter(Boolean);
+    const spy=new IntersectionObserver(es=>{
+      const v=es.filter(e=>e.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];
+      if(v){ links.forEach(a=>a.classList.toggle('active', a.getAttribute('href')==='#'+v.target.id)); }
+    },{rootMargin:'-20% 0px -70% 0px',threshold:[0,.25,.5,.75,1]});
+    secs.forEach(s=>spy.observe(s));
+
+    // ===== Tablas "card" en móviles: copiar encabezados a data-th =====
+    document.querySelectorAll('table').forEach(tbl=>{
+      const ths=[...tbl.querySelectorAll('thead th')].map(th=>th.textContent.trim());
+      tbl.querySelectorAll('tbody tr').forEach(tr=>{
+        [...tr.children].forEach((td,i)=>td.setAttribute('data-th', ths[i]||''));
+      });
+    });
+
+    // ===== Bitácora (localStorage) =====
+    const bKey='plagr-bitacora';
+    const fB=document.getElementById('fBitacora');
+    const tbB=document.querySelector('#tblBitacora tbody');
+    const stateB=JSON.parse(localStorage.getItem(bKey)||'[]');
+    const renderB=()=>{tbB.innerHTML=stateB.map((r,i)=>`<tr><td>${r.hora}</td><td>${r.equipo}</td><td>${r.detalle}</td><td><button class='btn' data-del='${i}'>Borrar</button></td></tr>`).join('')||'<tr><td colspan=4 class="muted">Sin registros</td></tr>'};
+    renderB();
+    fB?.addEventListener('submit',e=>{e.preventDefault(); const r={hora:bHora.value, equipo:bEquipo.value, detalle:bDetalle.value}; stateB.push(r); localStorage.setItem(bKey,JSON.stringify(stateB)); fB.reset(); renderB();});
+    tbB?.addEventListener('click',e=>{const i=e.target.getAttribute('data-del'); if(i){ stateB.splice(+i,1); localStorage.setItem(bKey,JSON.stringify(stateB)); renderB(); }});
+
+    // ===== Órdenes de trabajo (local) =====
+    const otKey='plagr-ot';
+    const fOT=document.getElementById('fOT');
+    const tbOT=document.querySelector('#tblOT tbody');
+    const stateOT=JSON.parse(localStorage.getItem(otKey)||'[]');
+    const renderOT=()=>{tbOT.insertAdjacentHTML('beforeend',''); tbOT.innerHTML=`<tr><td>OT-102</td><td>Rasquetas D1</td><td>2025-10-28</td><td>Pendiente</td><td><button class='btn' data-close>Finalizar</button></td></tr>` + stateOT.map((o,i)=>`<tr><td>${o.n}</td><td>${o.eq}</td><td>${o.f||''}</td><td>Pendiente</td><td><button class='btn' data-del='${i}'>Finalizar</button></td></tr>`).join(''); };
+    renderOT();
+    fOT?.addEventListener('submit',e=>{e.preventDefault(); stateOT.push({n:otN.value, eq:otEq.value, f:otF.value, d:otDet.value}); localStorage.setItem(otKey,JSON.stringify(stateOT)); fOT.reset(); renderOT();});
+    tbOT?.addEventListener('click',e=>{const i=e.target.getAttribute('data-del'); if(i!==null){ stateOT.splice(+i,1); localStorage.setItem(otKey,JSON.stringify(stateOT)); renderOT(); }});
+
+    // ===== Alarmas (acknowledge) =====
+    const tblA=document.getElementById('tblAlarmas');
+    tblA?.addEventListener('click',e=>{ if(e.target.hasAttribute('data-ack')){ const tr=e.target.closest('tr'); tr.cells[3].textContent='Reconocida'; e.target.remove(); }});
+
+    // ===== Exportar (JSON de bitácora y OT) =====
+    document.getElementById('btnExport')?.addEventListener('click',()=>{
+      const blob = new Blob([JSON.stringify({bitacora:stateB, ot:stateOT}, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = Object.assign(document.createElement('a'), {href:url, download:`plagr_export_${Date.now()}.json`});
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    });
+
+    // ===== FAB acción rápida =====
+    const fab=document.getElementById('fab');
+    fab?.addEventListener('click',()=>{ location.hash='#bitacora'; document.getElementById('bHora')?.focus(); });
+  </script>
+</body>
+</html>
