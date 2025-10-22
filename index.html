@@ -30,33 +30,32 @@
     aside{position:sticky; top:0; height:100dvh; overflow:auto; background:linear-gradient(180deg,var(--panel),var(--panel2)); border-right:1px solid var(--border); padding:18px}
     main{padding:18px; display:grid; gap:18px}
 
-    /* ===== Topbar (siempre visible) ===== */
+    /* ===== Topbar (solo lo pedido: logo, ☰, Inicio, Portal) ===== */
     .topbar{
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      padding:calc(10px + env(safe-area-inset-top)) 14px 10px;
+      display:flex; align-items:center; justify-content:flex-start; gap:8px;
+      padding:calc(8px + env(safe-area-inset-top)) 10px 8px;
       background:linear-gradient(180deg,var(--panel),var(--panel2));
       border-bottom:1px solid var(--border);
-      position:sticky; top:0; z-index:50; min-height:56px;
+      position:sticky; top:0; z-index:50; min-height:52px;
       grid-column:1 / -1; -webkit-user-select:none; user-select:none;
-      flex-wrap:nowrap;
     }
-    .topbar-left, .topbar-right{display:flex; align-items:center; gap:8px; flex:0 0 auto}
-    .topbar-left{min-width:0}
-    .topbar-center{
-      display:flex; align-items:center; gap:10px; flex:1 1 auto; min-width:0; justify-content:center;
-    }
-    .topbar-center img{width:28px; height:28px; border-radius:8px; flex:0 0 auto}
-    .topbar-title{font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%}
-
+    .brand-ico{width:28px; height:28px; border-radius:8px; flex:0 0 auto}
     .burger{
       border:1px solid var(--border); background:transparent; color:inherit;
-      padding:10px 12px; border-radius:12px; line-height:1; min-width:44px; min-height:40px;
+      padding:8px 10px; border-radius:10px; line-height:1; min-width:36px; min-height:36px; flex:0 0 auto;
     }
 
-    /* ===================== BOTONES ===================== */
-    .btn{padding:12px 14px; border-radius:12px; border:1px solid var(--border); background:linear-gradient(180deg,var(--panel),var(--panel2)); color:inherit; min-height:40px; white-space:nowrap}
+    /* Botones del header: compactos para que entren siempre */
+    .btn{padding:10px 12px; border-radius:12px; border:1px solid var(--border); background:linear-gradient(180deg,var(--panel),var(--panel2)); color:inherit; min-height:36px; white-space:nowrap}
     .btn.primary{background:var(--brand); color:#fff; border-color:color-mix(in srgb, var(--brand) 20%, black)}
-    .btn.sm{padding:8px 10px; min-height:36px; border-radius:10px; font-size:13px}
+    .btn.sm{padding:7px 9px; min-height:34px; border-radius:10px; font-size:12px}
+
+    /* Ajustes extra-chicos: 320–360 px */
+    @media (max-width: 380px){
+      .brand-ico{width:24px; height:24px}
+      .btn.sm{padding:6px 8px; font-size:11.5px}
+      .burger{min-height:34px; padding:7px 9px}
+    }
 
     /* ===================== SIDEBAR ===================== */
     .logo{display:flex; align-items:center; gap:10px}
@@ -141,25 +140,15 @@
       .overlay{display:block; position:fixed; inset:0; background:rgba(0,0,0,.45); backdrop-filter:blur(2px); opacity:0; pointer-events:none; transition:opacity .25s ease; z-index:35}
       .app.nav-open .overlay{opacity:1; pointer-events:auto}
 
-      /* Header: mantener botones + burger visibles */
-      .topbar-left .btn{display:inline-flex}
-      .topbar-right .btn{padding:8px 10px; font-size:12px}
-      .topbar-center .topbar-title{max-width:70vw}
-
       main{padding:12px 12px 96px}
       .cols-4{grid-template-columns:1fr 1fr}
       .cols-3{grid-template-columns:1fr 1fr}
       .cols-2{grid-template-columns:1fr}
       .bnav{display:grid}
     }
-    @media (max-width: 560px){
-      .topbar-center .topbar-title{max-width:62vw; font-size:14px}
-      .btn.sm{padding:6px 8px; font-size:11px}
-      .burger{min-height:36px; padding:8px 10px}
-    }
-    @media (max-width: 420px){
-      .topbar-right{display:none}                /* oculta 'Alarmas' para evitar apretujes */
-      .topbar-center .topbar-title{max-width:76vw}
+    @media (max-width: 640px){
+      .cols-4,.cols-3{grid-template-columns:1fr}
+      .btn{padding:10px 12px}
     }
 
     @media (prefers-reduced-motion: reduce){
@@ -170,22 +159,12 @@
 </head>
 <body>
   <div class="app" id="app">
-    <!-- ====== Header / Topbar ====== -->
+    <!-- ====== Header / Topbar (logo → ☰ → Inicio → Portal Usuarios) ====== -->
     <div class="topbar">
-      <div class="topbar-left">
-        <button class="burger" id="btnMenu" aria-label="Abrir menú" aria-expanded="false">☰</button>
-        <a class="btn sm primary" href="https://juanifernandez250.github.io/PLANTAR/">Inicio</a>
-        <a class="btn sm primary" href="https://juanifernandez250.github.io/PLANTAR-COMUNIDAD/">Portal Usuarios</a>
-      </div>
-
-      <div class="topbar-center">
-        <img src="./Logo-2D-sin-texto.png" alt="Logo PLAN.T.A.R." />
-        <strong class="topbar-title">PLAN.T.A.R. · Operación</strong>
-      </div>
-
-      <div class="topbar-right">
-        <a class="btn sm" href="#alarmas">Alarmas</a>
-      </div>
+      <img class="brand-ico" src="./Logo-2D-sin-texto.png" alt="Logo PLAN.T.A.R." />
+      <button class="burger" id="btnMenu" aria-label="Abrir menú" aria-expanded="false">☰</button>
+      <a class="btn sm primary" href="https://juanifernandez250.github.io/PLANTAR/">Inicio</a>
+      <a class="btn sm primary" href="https://juanifernandez250.github.io/PLANTAR-COMUNIDAD/">Portal Usuarios</a>
     </div>
 
     <div class="overlay" id="overlay"></div>
