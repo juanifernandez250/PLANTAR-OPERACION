@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>PLAN.T.A.R Río Gallegos · Portal de Operación</title>
-  <meta name="description" content="Panel operativo para empleados de la PLAGR Río Gallegos: KPIs, bitácora, mantenimiento, alarmas, laboratorio, HSE y documentos."/>
+  <meta name="description" content="Panel operativo para empleados de la PLAN.T.A.R Río Gallegos: KPIs, bitácora, mantenimiento, alarmas, laboratorio, HSE y documentos."/>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🛠️</text></svg>">
   <style>
     /* ===================== PALETA / TEMA ===================== */
@@ -21,7 +21,7 @@
     html{scroll-behavior:smooth}
     html,body{height:100%; overflow-x:hidden}
     body{margin:0; font:15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu; background:linear-gradient(180deg,var(--bg),#07110e 60%); color:var(--text)}
-    a{color:inherit}
+    a{color:inherit; text-decoration:none}
     img{max-width:100%; height:auto; display:block}
     button{cursor:pointer}
 
@@ -37,11 +37,11 @@
       background:linear-gradient(180deg,var(--panel),var(--panel2));
       border-bottom:1px solid var(--border);
       position:sticky; top:0; z-index:50; min-height:56px;
-      grid-column:1 / -1;
-      -webkit-user-select:none; user-select:none;
+      grid-column:1 / -1; -webkit-user-select:none; user-select:none;
       flex-wrap:nowrap;
     }
     .topbar-left, .topbar-right{display:flex; align-items:center; gap:8px; flex:0 0 auto}
+    .topbar-left{min-width:0}
     .topbar-center{
       display:flex; align-items:center; gap:10px; flex:1 1 auto; min-width:0; justify-content:center;
     }
@@ -49,11 +49,14 @@
     .topbar-title{font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%}
 
     .burger{
-      display:none;
       border:1px solid var(--border); background:transparent; color:inherit;
-      padding:12px 14px; border-radius:12px; line-height:1; min-width:44px; min-height:44px
+      padding:10px 12px; border-radius:12px; line-height:1; min-width:44px; min-height:40px;
     }
-    .overlay{display:none}
+
+    /* ===================== BOTONES ===================== */
+    .btn{padding:12px 14px; border-radius:12px; border:1px solid var(--border); background:linear-gradient(180deg,var(--panel),var(--panel2)); color:inherit; min-height:40px; white-space:nowrap}
+    .btn.primary{background:var(--brand); color:#fff; border-color:color-mix(in srgb, var(--brand) 20%, black)}
+    .btn.sm{padding:8px 10px; min-height:36px; border-radius:10px; font-size:13px}
 
     /* ===================== SIDEBAR ===================== */
     .logo{display:flex; align-items:center; gap:10px}
@@ -63,7 +66,7 @@
     .search{margin-top:12px}
     .search input{width:100%; padding:12px; border-radius:12px; border:1px solid var(--border); background:transparent; color:inherit}
     nav{display:grid; gap:6px; margin:14px 0}
-    nav a{display:flex; align-items:center; gap:10px; padding:12px 14px; border:1px solid transparent; border-radius:12px; text-decoration:none}
+    nav a{display:flex; align-items:center; gap:10px; padding:12px 14px; border:1px solid transparent; border-radius:12px}
     nav a:hover{background:#ffffff10; border-color:var(--border)}
     nav a.active{background:color-mix(in srgb, var(--brand) 20%, transparent); border-color:#3a6a5530}
 
@@ -76,9 +79,6 @@
     .top{display:flex; align-items:center; justify-content:space-between; gap:12px}
     .breadcrumbs{color:var(--muted); font-size:13px}
     .actions{display:flex; gap:8px; flex-wrap:wrap}
-    .btn{padding:12px 14px; border-radius:12px; border:1px solid var(--border); background:linear-gradient(180deg,var(--panel),var(--panel2)); color:inherit; text-decoration:none; min-height:44px; white-space:nowrap}
-    .btn.primary{background:var(--brand); color:#fff; border-color:color-mix(in srgb, var(--brand) 20%, black)}
-    .btn.sm{padding:8px 10px; min-height:36px; border-radius:10px; font-size:13px}
 
     /* ===================== CARDS / GRIDS ===================== */
     .grid{display:grid; gap:14px}
@@ -124,12 +124,9 @@
 
     /* ===== Bottom Nav (móvil) ===== */
     .bnav{position:fixed; bottom:0; left:0; right:0; display:none; grid-template-columns:repeat(5,1fr); gap:6px; padding:8px; background:linear-gradient(180deg,var(--panel),var(--panel2)); border-top:1px solid var(--border); z-index:45}
-    .bnav a{display:grid; place-items:center; text-decoration:none; color:inherit; padding:10px 6px; border-radius:10px; border:1px solid transparent; font-size:12px}
+    .bnav a{display:grid; place-items:center; color:inherit; padding:10px 6px; border-radius:10px; border:1px solid transparent; font-size:12px}
     .bnav a i{display:block; font-style:normal; font-size:18px; margin-bottom:4px}
     .bnav a:active, .bnav a:hover{background:#ffffff10; border-color:var(--border)}
-
-    /* ===== FAB (móvil) ===== */
-    .fab{position:fixed; right:14px; bottom:72px; display:none; padding:14px 16px; border-radius:999px; background:var(--brand); color:#fff; border:none; box-shadow:var(--shadow); font-weight:600; z-index:46}
 
     /* ===================== RESPONSIVE ===================== */
     @media (max-width: 1160px){
@@ -144,29 +141,27 @@
       .overlay{display:block; position:fixed; inset:0; background:rgba(0,0,0,.45); backdrop-filter:blur(2px); opacity:0; pointer-events:none; transition:opacity .25s ease; z-index:35}
       .app.nav-open .overlay{opacity:1; pointer-events:auto}
 
-      .burger{display:inline-block}                 /* ☰ visible */
-      .topbar-left .btn{display:none}               /* oculta botones grandes */
-      .topbar-right .btn{padding:8px 10px; font-size:12px} /* compacta 'Alarmas' */
-      .topbar-center .topbar-title{max-width:70vw} /* margen para lados */
+      /* Header: mantener botones + burger visibles */
+      .topbar-left .btn{display:inline-flex}
+      .topbar-right .btn{padding:8px 10px; font-size:12px}
+      .topbar-center .topbar-title{max-width:70vw}
 
       main{padding:12px 12px 96px}
       .cols-4{grid-template-columns:1fr 1fr}
       .cols-3{grid-template-columns:1fr 1fr}
       .cols-2{grid-template-columns:1fr}
       .bnav{display:grid}
-      .fab{display:inline-flex; align-items:center; gap:8px}
     }
     @media (max-width: 560px){
       .topbar-center .topbar-title{max-width:62vw; font-size:14px}
+      .btn.sm{padding:6px 8px; font-size:11px}
+      .burger{min-height:36px; padding:8px 10px}
     }
     @media (max-width: 420px){
-      .topbar-right{display:none}                   /* oculta 'Alarmas' en muy chico */
+      .topbar-right{display:none}                /* oculta 'Alarmas' para evitar apretujes */
       .topbar-center .topbar-title{max-width:76vw}
     }
-    @media (max-width: 640px){
-      .cols-4,.cols-3{grid-template-columns:1fr}
-      .btn{padding:12px 14px}
-    }
+
     @media (prefers-reduced-motion: reduce){
       html{scroll-behavior:auto}
       .overlay, aside{transition:none}
@@ -178,9 +173,9 @@
     <!-- ====== Header / Topbar ====== -->
     <div class="topbar">
       <div class="topbar-left">
+        <button class="burger" id="btnMenu" aria-label="Abrir menú" aria-expanded="false">☰</button>
         <a class="btn sm primary" href="https://juanifernandez250.github.io/PLANTAR/">Inicio</a>
         <a class="btn sm primary" href="https://juanifernandez250.github.io/PLANTAR-COMUNIDAD/">Portal Usuarios</a>
-        <button class="burger" id="btnMenu" aria-label="Abrir menú" aria-expanded="false">☰</button>
       </div>
 
       <div class="topbar-center">
@@ -237,7 +232,7 @@
     <!-- ================================= MAIN ================================= -->
     <main>
       <div class="top">
-        <div class="breadcrumbs">PLAGR / Operación</div>
+        <div class="breadcrumbs">PLAN.T.A.R / Operación</div>
         <div class="actions">
           <a class="btn" href="#bitacora">Cargar parte</a>
           <a class="btn primary" href="#alarmas">Ver alarmas</a>
@@ -395,7 +390,6 @@
     <a href="#alarmas"><i>🚨</i>Alarmas</a>
     <a href="#hse"><i>🦺</i>HSE</a>
   </nav>
-  <button class="fab" id="fab">➕ Registrar</button>
 
   <script>
     // ===== Tema (toggle light/dark con localStorage) =====
@@ -469,10 +463,6 @@
       const a = Object.assign(document.createElement('a'), {href:url, download:`plagr_export_${Date.now()}.json`});
       document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
     });
-
-    // ===== FAB acción rápida =====
-    const fab=document.getElementById('fab');
-    fab?.addEventListener('click',()=>{ location.hash='#bitacora'; document.getElementById('bHora')?.focus(); });
   </script>
 </body>
 </html>
